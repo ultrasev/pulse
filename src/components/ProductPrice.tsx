@@ -44,17 +44,71 @@ interface ProductData {
     };
 }
 
+interface CacheData {
+    data: ProductData;
+    skuId: string;
+    timestamp: number;
+}
+
 const API_BASE = 'https://gateway.ddot.cc/api/digfrog/product';
+const CACHE_KEY = 'product_price_cache';
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时
+
+const getCache = (sku: string): ProductData | null => {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return null;
+        const parsed: CacheData = JSON.parse(cached);
+        // 检查是否匹配当前 SKU 且未过期
+        if (parsed.skuId === sku && Date.now() - parsed.timestamp < CACHE_DURATION) {
+            return parsed.data;
+        }
+    } catch {
+        // ignore parse errors
+    }
+    return null;
+};
+
+const setCache = (sku: string, data: ProductData) => {
+    try {
+        const cacheData: CacheData = {
+            data,
+            skuId: sku,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    } catch {
+        // ignore storage errors
+    }
+};
 
 export default function ProductPrice() {
     const [skuId, setSkuId] = useState('100209267857');
     const [inputSku, setInputSku] = useState('100209267857');
-    const [productData, setProductData] = useState<ProductData | null>(null);
+    const [productData, setProductData] = useState<ProductData | null>(() => getCache('100209267857'));
     const [loading, setLoading] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [lastUpdate, setLastUpdate] = useState<number | null>(() => {
+        try {
+            const cached = localStorage.getItem(CACHE_KEY);
+            if (!cached) return null;
+            const parsed: CacheData = JSON.parse(cached);
+            if (parsed.skuId === '100209267857') {
+                return parsed.timestamp;
+            }
+        } catch {
+            // ignore
+        }
+        return null;
+    });
 
-    const fetchProductPrice = async (sku: string) => {
-        setLoading(true);
+    const fetchProductPrice = async (sku: string, isBackground = false) => {
+        if (!isBackground) {
+            setLoading(true);
+        } else {
+            setIsRefreshing(true);
+        }
         setError(null);
         try {
             const response = await fetch(`${API_BASE}/${sku}`, {
@@ -72,22 +126,47 @@ export default function ProductPrice() {
             }
             setProductData(data);
             setSkuId(sku);
+            setCache(sku, data);
+            setLastUpdate(Date.now());
         } catch (e) {
             console.error("Failed to fetch product info:", e);
             setError(e instanceof Error ? e.message : '加载商品信息失败');
         } finally {
-            setLoading(false);
+            if (!isBackground) {
+                setLoading(false);
+            } else {
+                setIsRefreshing(false);
+            }
         }
     };
 
     useEffect(() => {
-        fetchProductPrice(skuId);
+        // 如果有缓存数据，后台刷新；否则立即加载
+        if (productData) {
+            fetchProductPrice(skuId, true);
+        } else {
+            fetchProductPrice(skuId);
+        }
     }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (inputSku.trim()) {
-            fetchProductPrice(inputSku.trim());
+            const sku = inputSku.trim();
+            // 先尝试从缓存加载
+            const cached = getCache(sku);
+            if (cached) {
+                setProductData(cached);
+                setSkuId(sku);
+                try {
+                    const cacheData = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+                    setLastUpdate(cacheData.timestamp || Date.now());
+                } catch {
+                    // ignore
+                }
+            }
+            // 然后拉取最新数据
+            fetchProductPrice(sku, !!cached);
         }
     };
 
@@ -99,6 +178,14 @@ export default function ProductPrice() {
             hour: '2-digit',
             minute: '2-digit'
         });
+    };
+
+    const getTimeAgo = (timestamp: number) => {
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return '刚刚';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}分钟前`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}小时前`;
+        return `${Math.floor(seconds / 86400)}天前`;
     };
 
     return (
@@ -120,6 +207,14 @@ export default function ProductPrice() {
                     {loading ? '查询中...' : '查询'}
                 </button>
             </form>
+
+            {/* 缓存提示 */}
+            {lastUpdate && !loading && (
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-2">
+                    <span>更新于 {getTimeAgo(lastUpdate)}</span>
+                    {isRefreshing && <span className="text-orange-500">更新中...</span>}
+                </div>
+            )}
 
             {loading && !productData && (
                 <div className="flex items-center justify-center h-64">
