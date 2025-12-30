@@ -39,7 +39,7 @@ struct AppState {
 
 fn format_speed(bytes: u64) -> String {
     if bytes < 1024 {
-        format!("{:>3} B/s", bytes)
+        format!("{:>3} B", bytes)
     } else if bytes < 1024 * 1024 {
         format!("{:>3} K/s", bytes / 1024)
     } else {
@@ -93,12 +93,12 @@ fn start_tray_update_loop(app: AppHandle) {
 
             // 简化显示：只显示百分比，不显示 "CPU:" 前缀
             let cpu_str = format!("{:.0}%", cpu);
-            let up_str = format!("↑{}", format_speed(up));
-            let down_str = format!("↓{}", format_speed(down));
+            let up_str = format!("{}", format_speed(up));
+            let down_str = format!("{}", format_speed(down));
 
             // Helpers for lengths
-            let sep1 = " ";
-            let sep2 = " ";
+            let sep1 = ",";
+            let sep2 = ",";
 
             let cpu_len = cpu_str.encode_utf16().count();
             let sep1_len = sep1.encode_utf16().count();
@@ -210,6 +210,7 @@ fn get_system_stats(state: State<AppState>) -> SystemStats {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .manage(AppState {
             sys: Mutex::new(System::new_all()),
             networks: Mutex::new(Networks::new_with_refreshed_list()),

@@ -6,6 +6,13 @@
     "main"
   ],
   "permissions": [
-    "core:default"
+    "core:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://cufo.cc" },
+        { "url": "https://cufo.cc/**" }
+      ]
+    }
   ]
 }
