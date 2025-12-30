@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import SystemDashboard from './SystemDashboard';
 import IpInfo from './IpInfo';
+import ProductPrice from './ProductPrice';
 
-type Tab = 'system' | 'ipinfo';
+type Tab = 'system' | 'ipinfo' | 'price';
 
 export default function App() {
     const [activeTab, setActiveTab] = useState<Tab>('system');
@@ -36,11 +37,22 @@ export default function App() {
                 >
                     🌐 IP Info
                 </button>
+                <button
+                    onClick={() => setActiveTab('price')}
+                    className={`flex-1 py-2 px-4 rounded-md font-medium transition-all ${
+                        activeTab === 'price'
+                            ? 'bg-white dark:bg-gray-700 shadow-sm text-orange-600 dark:text-orange-400'
+                            : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                    }`}
+                >
+                    🏷️ Price
+                </button>
             </nav>
 
             {/* 内容区域 */}
             {activeTab === 'system' && <SystemDashboard />}
             {activeTab === 'ipinfo' && <IpInfo />}
+            {activeTab === 'price' && <ProductPrice />}
         </div>
     );
 }

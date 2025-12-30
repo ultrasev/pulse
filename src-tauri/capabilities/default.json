@@ -11,7 +11,9 @@
       "identifier": "http:default",
       "allow": [
         { "url": "https://cufo.cc" },
-        { "url": "https://cufo.cc/**" }
+        { "url": "https://cufo.cc/**" },
+        { "url": "https://gateway.ddot.cc" },
+        { "url": "https://gateway.ddot.cc/**" }
       ]
     }
   ]

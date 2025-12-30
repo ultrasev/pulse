@@ -22,8 +22,10 @@
       }
     ],
     "security": {
-      "csp": null
-    }
+      "csp": null,
+      "dangerousDisableAssetCspModification": false
+    },
+    "withGlobalTauri": true
   },
   "bundle": {
     "active": true,
