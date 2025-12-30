@@ -216,6 +216,14 @@ pub fn run() {
             networks: Mutex::new(Networks::new_with_refreshed_list()),
             status_item: Mutex::new(None),
         })
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                // 最小化而不是退出
+                let _ = window.minimize();
+                api.prevent_close();
+            }
+            _ => {}
+        })
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -225,7 +233,7 @@ pub fn run() {
                 )?;
             }
 
-            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            app.set_activation_policy(tauri::ActivationPolicy::Regular);
 
             let mtm = unsafe { MainThreadMarker::new_unchecked() };
 
