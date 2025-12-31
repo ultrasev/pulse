@@ -7,7 +7,7 @@ use sysinfo::{System, Disks, Networks};
 use objc2::rc::{Allocated, Retained};
 use objc2::ClassType;
 use objc2_app_kit::{
-    NSColor, NSStatusBar, NSStatusItem, NSMenu, NSMenuItem,
+    NSColor, NSStatusBar, NSStatusItem,
     NSVariableStatusItemLength,
 };
 use objc2_foundation::{
@@ -216,6 +216,14 @@ pub fn run() {
             networks: Mutex::new(Networks::new_with_refreshed_list()),
             status_item: Mutex::new(None),
         })
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                // 隐藏窗口而不是退出，这样可以通过托盘菜单的 unhide: 恢复
+                let _ = window.hide();
+                api.prevent_close();
+            }
+            _ => {}
+        })
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -227,6 +235,53 @@ pub fn run() {
 
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 
+            // 使用 Tauri 的 tray 系统来处理点击事件
+            use tauri::tray::{TrayIconBuilder, MouseButton, MouseButtonState};
+            use tauri::menu::{MenuBuilder, MenuItemBuilder};
+
+            let show_item = MenuItemBuilder::with_id("show", "Show Window").build(app)?;
+            let quit_item = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
+            let tray_menu = MenuBuilder::new(app)
+                .item(&show_item)
+                .separator()
+                .item(&quit_item)
+                .build()?;
+
+            // 加载托盘图标 (圆角版本)
+            let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon-rounded.png"))
+                .expect("Failed to load tray icon");
+
+            let _tray = TrayIconBuilder::new()
+                .icon(icon)
+                .tooltip("System Monitor")
+                .menu(&tray_menu)
+                .show_menu_on_left_click(false)  // 左键点击不显示菜单，左键点击直接显示窗口
+                .on_menu_event(|app, event| {
+                    match event.id().as_ref() {
+                        "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        _ => {}
+                    }
+                })
+                .on_tray_icon_event(|tray, event| {
+                    // 左键点击托盘图标时显示窗口
+                    if let tauri::tray::TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
             let mtm = unsafe { MainThreadMarker::new_unchecked() };
 
             let status_bar = NSStatusBar::systemStatusBar();
@@ -236,37 +291,7 @@ pub fn run() {
                  button.setTitle(ns_string!("System Monitor"));
             }
 
-            // 创建原生菜单
-            let menu = NSMenu::new(mtm);
-
-            // 添加 "Show Window" 菜单项 - 使用 unhide: 来显示应用
-            let alloc_show: Allocated<NSMenuItem> = unsafe { objc2::msg_send![NSMenuItem::class(), alloc] };
-            let show_item = unsafe {
-                NSMenuItem::initWithTitle_action_keyEquivalent(
-                    alloc_show,
-                    ns_string!("Show Window"),
-                    Some(objc2::sel!(unhide:)),
-                    ns_string!("s")
-                )
-            };
-            menu.addItem(&show_item);
-
-            // 添加分隔线
-            menu.addItem(&NSMenuItem::separatorItem(mtm));
-
-            // 添加 "Quit" 菜单项
-            let alloc_item: Allocated<NSMenuItem> = unsafe { objc2::msg_send![NSMenuItem::class(), alloc] };
-            let quit_item = unsafe {
-                NSMenuItem::initWithTitle_action_keyEquivalent(
-                    alloc_item,
-                    ns_string!("Quit"),
-                    Some(objc2::sel!(terminate:)),
-                    ns_string!("q")
-                )
-            };
-            menu.addItem(&quit_item);
-
-            status_item.setMenu(Some(&menu));
+            // 原生 NSStatusItem 不设置菜单，菜单由 Tauri tray 处理
 
             let state = app.state::<AppState>();
             *state.status_item.lock().unwrap() = Some(ThreadSafeStatusItem(status_item));
