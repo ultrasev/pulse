@@ -26,8 +26,17 @@ impl Default for UploadConfig {
     }
 }
 
-/// Get config file path: ~/.config/pulse/config.toml
+/// Get config file path: ~/.config/pulse/config.toml (preferred) or ~/Library/Application Support/pulse/config.toml
 pub fn get_config_path() -> PathBuf {
+    // Prefer ~/.config/pulse/config.toml (Unix-style)
+    if let Some(home) = dirs::home_dir() {
+        let unix_style = home.join(".config").join("pulse").join("config.toml");
+        if unix_style.exists() {
+            return unix_style;
+        }
+    }
+
+    // Fallback to macOS standard location
     dirs::config_dir()
         .unwrap_or_else(|| PathBuf::from("."))
         .join("pulse")
