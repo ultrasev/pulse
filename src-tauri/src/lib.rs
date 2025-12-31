@@ -247,8 +247,8 @@ pub fn run() {
                 .item(&quit_item)
                 .build()?;
 
-            // 加载托盘图标
-            let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/32x32.png"))
+            // 加载托盘图标 (圆角版本)
+            let icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray-icon-rounded.png"))
                 .expect("Failed to load tray icon");
 
             let _tray = TrayIconBuilder::new()
