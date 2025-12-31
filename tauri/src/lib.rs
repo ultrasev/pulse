@@ -9,6 +9,7 @@ use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use modules::AppState;
 use modules::system::{get_system_stats, start_tray_update_loop};
 use modules::upload::{get_clipboard_image, upload_image, handle_upload_shortcut};
+use modules::git::{get_git_branches, switch_git_branch};
 
 // Native imports
 use objc2::MainThreadMarker;
@@ -118,7 +119,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_system_stats,
             get_clipboard_image,
-            upload_image
+            upload_image,
+            get_git_branches,
+            switch_git_branch
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
