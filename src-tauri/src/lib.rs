@@ -1,7 +1,12 @@
 use std::sync::Mutex;
 use std::time::Duration;
-use tauri::{State, Manager, AppHandle};
+use std::thread;
+use std::fs;
+use tauri::{State, Manager, AppHandle, Emitter};
 use sysinfo::{System, Disks, Networks};
+use arboard::Clipboard;
+use base64::Engine;
+use image::{ImageBuffer, RgbaImage};
 
 // Native imports
 use objc2::rc::{Allocated, Retained};
@@ -28,6 +33,16 @@ struct SystemStats {
     disk_usage_percent: u64,
     network_speed_up: u64,
     network_speed_down: u64,
+}
+
+#[derive(serde::Serialize, Clone, Debug)]
+struct UploadResult {
+    success: bool,
+    url: Option<String>,
+    filename: Option<String>,
+    size: Option<String>,
+    duration: Option<String>,
+    error: Option<String>,
 }
 
 struct AppState {
@@ -207,10 +222,209 @@ fn get_system_stats(state: State<AppState>) -> SystemStats {
     }
 }
 
+// Image data from clipboard
+#[derive(serde::Serialize)]
+struct ClipboardImage {
+    has_image: bool,
+    data_url: Option<String>,
+    size_bytes: Option<usize>,
+    error: Option<String>,
+}
+
+/// Get image from clipboard as base64 data URL
+#[tauri::command]
+fn get_clipboard_image() -> ClipboardImage {
+    match Clipboard::new() {
+        Ok(mut clipboard) => {
+            match clipboard.get_image() {
+                Ok(image_data) => {
+                    let size = image_data.bytes.len();
+                    let data_url = format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(&image_data.bytes));
+                    ClipboardImage {
+                        has_image: true,
+                        data_url: Some(data_url),
+                        size_bytes: Some(size),
+                        error: None,
+                    }
+                }
+                Err(_) => ClipboardImage {
+                    has_image: false,
+                    data_url: None,
+                    size_bytes: None,
+                    error: Some("No image in clipboard".to_string()),
+                }
+            }
+        }
+        Err(e) => ClipboardImage {
+            has_image: false,
+            data_url: None,
+            size_bytes: None,
+            error: Some(format!("Failed to access clipboard: {}", e)),
+        }
+    }
+}
+
+/// Convert raw RGBA bytes from clipboard to PNG format
+fn rgba_to_png(rgba_data: &[u8], width: usize, height: usize) -> Result<Vec<u8>, String> {
+    // Create ImageBuffer from RGBA data
+    let img: RgbaImage = ImageBuffer::from_raw(
+        width as u32,
+        height as u32,
+        rgba_data.to_vec(),
+    ).ok_or("Failed to create image buffer")?;
+
+    // Encode as PNG
+    let mut png_bytes = Vec::new();
+    img.write_to(&mut std::io::Cursor::new(&mut png_bytes), image::ImageFormat::Png)
+        .map_err(|e| format!("Failed to encode PNG: {}", e))?;
+
+    Ok(png_bytes)
+}
+
+/// Upload image data to server with retry logic
+#[tauri::command]
+fn upload_image(image_base64: String, retry_count: Option<u32>) -> Result<UploadResult, String> {
+    upload_image_with_retry(image_base64, retry_count.unwrap_or(0))
+}
+
+fn upload_image_with_retry(image_base64: String, retry_count: u32) -> Result<UploadResult, String> {
+    let url = "http://REDACTED_HOST:38080/api/image";
+
+    // Extract base64 data from data URL if present
+    let base64_data = if image_base64.starts_with("data:image/") {
+        image_base64.split(',').nth(1).unwrap_or(&image_base64)
+    } else {
+        &image_base64
+    };
+
+    // Decode base64 to bytes
+    let image_bytes = base64::engine::general_purpose::STANDARD
+        .decode(base64_data)
+        .map_err(|e| {
+            log::error!("Failed to decode base64: {}", e);
+            format!("Failed to decode base64: {}", e)
+        })?;
+
+    let size_bytes = image_bytes.len();
+
+    // Verify PNG magic bytes before uploading
+    if image_bytes.len() >= 8 {
+        let header = &image_bytes[0..8];
+        log::info!("Upload image header: {:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x}",
+            header[0], header[1], header[2], header[3],
+            header[4], header[5], header[6], header[7]);
+    }
+
+    log::info!("Uploading image: {} bytes, attempt {}", size_bytes, retry_count + 1);
+
+    // Create multipart form using blocking client
+    let part = reqwest::blocking::multipart::Part::bytes(image_bytes.clone())
+        .file_name("image.png")
+        .mime_str("image/png")
+        .map_err(|e| {
+            log::error!("Failed to create mime part: {}", e);
+            format!("Failed to create mime part: {}", e)
+        })?;
+
+    let form = reqwest::blocking::multipart::Form::new()
+        .part("file", part);
+
+    // Create client with timeout
+    let client = reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(60))
+        .build()
+        .map_err(|e| {
+            log::error!("Failed to create HTTP client: {}", e);
+            format!("Failed to create HTTP client: {}", e)
+        })?;
+
+    // Make the request
+    log::info!("Sending PUT request to {}", url);
+    let response = client
+        .put(url)
+        .header("Authorization", "Bearer REDACTED")
+        .multipart(form)
+        .send();
+
+    match response {
+        Ok(resp) => {
+            let status = resp.status();
+            let response_text = resp.text().unwrap_or_else(|_| "Unable to decode response".to_string());
+
+            log::info!("Upload response status: {}", status);
+            log::info!("Upload response body: {}", response_text);
+
+            if status.is_success() {
+                // Parse JSON response
+                if let Ok(json) = serde_json::from_str::<serde_json::Value>(&response_text) {
+                    log::info!("Parsed JSON response: {}", json);
+
+                    // The API returns the path directly, just concatenate
+                    if let Some(url_path) = json["url"].as_str() {
+                        log::info!("url_path from API: {}", url_path);
+
+                        // Don't decode - use the raw path as-is from API
+                        let full_url = format!("http://REDACTED_HOST:38080{}", url_path);
+                        log::info!("Final image URL: {}", full_url);
+
+                        let filename = json["originalFileName"].as_str().unwrap_or("image.png");
+                        let size = format_size(size_bytes);
+                        return Ok(UploadResult {
+                            success: true,
+                            url: Some(full_url),
+                            filename: Some(filename.to_string()),
+                            size: Some(size),
+                            duration: None,
+                            error: None,
+                        });
+                    } else {
+                        log::error!("No 'url' field in response");
+                        return Err(format!("No 'url' field in response: {}", response_text));
+                    }
+                } else {
+                    log::error!("Failed to parse JSON response");
+                    return Err(format!("Failed to parse JSON: {}", response_text));
+                }
+            } else if (status.is_server_error() || status == 429) && retry_count < 2 {
+                // Retry on server error or rate limit
+                log::warn!("Server error, retrying... status: {}", status);
+                thread::sleep(Duration::from_secs(1));
+                upload_image_with_retry(image_base64, retry_count + 1)
+            } else {
+                log::error!("Upload failed with status {}: {}", status, response_text);
+                Err(format!("Upload failed with status {}: {}", status, response_text))
+            }
+        }
+        Err(e) => {
+            if e.is_timeout() || e.is_connect() && retry_count < 2 {
+                // Retry on timeout or connection error
+                log::warn!("Network error, retrying: {}", e);
+                thread::sleep(Duration::from_secs(1));
+                upload_image_with_retry(image_base64, retry_count + 1)
+            } else {
+                log::error!("Network error: {}", e);
+                Err(format!("Network error: {}", e))
+            }
+        }
+    }
+}
+
+fn format_size(bytes: usize) -> String {
+    if bytes < 1024 {
+        format!("{} B", bytes)
+    } else if bytes < 1024 * 1024 {
+        format!("{:.1} KB", bytes as f64 / 1024.0)
+    } else {
+        format!("{:.1} MB", bytes as f64 / 1024.0 / 1024.0)
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_shell::init())
         .manage(AppState {
             sys: Mutex::new(System::new_all()),
             networks: Mutex::new(Networks::new_with_refreshed_list()),
@@ -234,6 +448,132 @@ pub fn run() {
             }
 
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            // Register global shortcut for image upload (Shift+Cmd+U)
+            use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState, GlobalShortcutExt};
+
+            log::info!("Registering global shortcut: Shift+Cmd+U for image upload");
+
+            let handle = app.handle().clone();
+            app.global_shortcut().on_shortcut(
+                Shortcut::new(Some(Modifiers::SHIFT | Modifiers::SUPER), Code::KeyU),
+                move |_app, _shortcut, event| {
+                    if event.state == ShortcutState::Pressed {
+                        log::info!("Global shortcut triggered: Shift+Cmd+U");
+                        let handle = handle.clone();
+                        tauri::async_runtime::spawn_blocking(move || {
+                            // Perform upload in background thread
+                            log::info!("Accessing clipboard...");
+                            if let Ok(mut clipboard) = Clipboard::new() {
+                                if let Ok(image_data) = clipboard.get_image() {
+                                    log::info!("Got image from clipboard: {} bytes, {}x{}", image_data.bytes.len(), image_data.width, image_data.height);
+
+                                    // Convert RGBA to PNG
+                                    let png_bytes = match rgba_to_png(&image_data.bytes, image_data.width, image_data.height) {
+                                        Ok(data) => {
+                                            log::info!("Converted to PNG: {} bytes", data.len());
+                                            // Verify PNG header
+                                            if data.len() >= 8 {
+                                                let header = &data[0..8];
+                                                log::info!("PNG header bytes: {:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x}",
+                                                    header[0], header[1], header[2], header[3],
+                                                    header[4], header[5], header[6], header[7]);
+                                            }
+                                            data
+                                        }
+                                        Err(e) => {
+                                            log::error!("Failed to convert to PNG: {}", e);
+                                            let _ = handle.emit("upload-result", UploadResult {
+                                                success: false,
+                                                url: None,
+                                                filename: None,
+                                                size: None,
+                                                duration: None,
+                                                error: Some(format!("Failed to convert image: {}", e)),
+                                            });
+                                            if let Some(window) = handle.get_webview_window("main") {
+                                                let _ = window.show();
+                                                let _ = window.set_focus();
+                                                let _ = window.emit("switch-to-upload", ());
+                                            }
+                                            return;
+                                        }
+                                    };
+
+                                    // DEBUG: Save PNG to verify
+                                    if let Err(e) = fs::write("/tmp/clipboard_debug.png", &png_bytes) {
+                                        log::error!("Failed to save debug image: {}", e);
+                                    } else {
+                                        log::info!("Saved debug PNG to /tmp/clipboard_debug.png");
+                                    }
+
+                                    let base64_data = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
+                                    let data_url = format!("data:image/png;base64,{}", base64_data);
+
+                                    // Upload and emit result
+                                    log::info!("Starting upload...");
+                                    match upload_image_with_retry(data_url, 0) {
+                                        Ok(result) => {
+                                            log::info!("Upload successful: {:?}", result);
+
+                                            // First show window and switch tab, then emit result
+                                            if let Some(window) = handle.get_webview_window("main") {
+                                                let _ = window.show();
+                                                let _ = window.set_focus();
+                                                // Small delay to ensure window is ready
+                                                thread::sleep(Duration::from_millis(50));
+                                                let _ = window.emit("switch-to-upload", ());
+                                            }
+                                            // Then emit result after tab switch
+                                            thread::sleep(Duration::from_millis(50));
+                                            let _ = handle.emit("upload-result", result);
+                                        }
+                                        Err(err) => {
+                                            log::error!("Upload failed: {}", err);
+
+                                            if let Some(window) = handle.get_webview_window("main") {
+                                                let _ = window.show();
+                                                let _ = window.set_focus();
+                                                thread::sleep(Duration::from_millis(50));
+                                                let _ = window.emit("switch-to-upload", ());
+                                            }
+                                            thread::sleep(Duration::from_millis(50));
+                                            let _ = handle.emit("upload-result", UploadResult {
+                                                success: false,
+                                                url: None,
+                                                filename: None,
+                                                size: None,
+                                                duration: None,
+                                                error: Some(err),
+                                            });
+                                        }
+                                    }
+                                } else {
+                                    log::warn!("No image in clipboard");
+
+                                    if let Some(window) = handle.get_webview_window("main") {
+                                        let _ = window.show();
+                                        let _ = window.set_focus();
+                                        thread::sleep(Duration::from_millis(50));
+                                        let _ = window.emit("switch-to-upload", ());
+                                    }
+                                    thread::sleep(Duration::from_millis(50));
+                                    let _ = handle.emit("upload-result", UploadResult {
+                                        success: false,
+                                        url: None,
+                                        filename: None,
+                                        size: None,
+                                        duration: None,
+                                        error: Some("No image in clipboard".to_string()),
+                                    });
+                                }
+                            } else {
+                                log::error!("Failed to access clipboard");
+                            }
+                        });
+                    }
+                }
+            )?;
 
             // 使用 Tauri 的 tray 系统来处理点击事件
             use tauri::tray::{TrayIconBuilder, MouseButton, MouseButtonState};
@@ -300,7 +640,11 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_system_stats])
+        .invoke_handler(tauri::generate_handler![
+            get_system_stats,
+            get_clipboard_image,
+            upload_image
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
