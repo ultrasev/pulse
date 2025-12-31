@@ -8,37 +8,38 @@ fn get_macos_memory_usage() -> Option<u64> {
     let output = Command::new("vm_stat").output().ok()?;
     let output_str = String::from_utf8_lossy(&output.stdout);
 
-    let mut pages_active = 0;
-    let mut pages_wired = 0;
-    let mut pages_compressed = 0;
-
-    // Default page size for macOS (x86_64 and arm64 usually 4096 or 16384)
-    // We can fetch it dynamically to be safe
-    let page_size = if let Ok(output) = Command::new("pagesize").output() {
-        String::from_utf8_lossy(&output.stdout).trim().parse::<u64>().unwrap_or(4096)
-    } else {
-        4096
-    };
-
-    for line in output_str.lines() {
-        if line.starts_with("Pages active:") {
-            if let Some(val) = line.split(':').nth(1) {
-                pages_active = val.trim().trim_end_matches('.').parse::<u64>().unwrap_or(0);
-            }
-        } else if line.starts_with("Pages wired down:") {
-            if let Some(val) = line.split(':').nth(1) {
-                pages_wired = val.trim().trim_end_matches('.').parse::<u64>().unwrap_or(0);
-            }
-        } else if line.starts_with("Pages occupied by compressor:") {
-             if let Some(val) = line.split(':').nth(1) {
-                pages_compressed = val.trim().trim_end_matches('.').parse::<u64>().unwrap_or(0);
+    // Default to 16KB for Apple Silicon, fallback to 4KB if unknown
+    // We try to parse the header "Mach Virtual Memory Statistics: (page size of 16384 bytes)"
+    let mut page_size = 16384;
+    if let Some(first_line) = output_str.lines().next() {
+        if let Some(start) = first_line.find("page size of ") {
+            if let Some(end) = first_line[start..].find(" bytes") {
+                if let Ok(size) = first_line[start + 13..start + end].parse::<u64>() {
+                    page_size = size;
+                }
             }
         }
     }
 
-    // Memory Used = Active + Wired + Compressed
-    // This matches the "Memory Used" graph in Activity Monitor
-    let used_bytes = (pages_active + pages_wired + pages_compressed) * page_size;
+    let mut pages_anonymous = 0;
+    let mut pages_purgeable = 0;
+
+    for line in output_str.lines() {
+        if line.starts_with("Anonymous pages:") {
+            if let Some(val) = line.split(':').nth(1) {
+                pages_anonymous = val.trim().trim_end_matches('.').parse::<u64>().unwrap_or(0);
+            }
+        } else if line.starts_with("Pages purgeable:") {
+             if let Some(val) = line.split(':').nth(1) {
+                pages_purgeable = val.trim().trim_end_matches('.').parse::<u64>().unwrap_or(0);
+            }
+        }
+    }
+
+    // "App Memory" calculation matching Activity Monitor
+    // App Memory = (Anonymous pages - Purgeable pages) * Page Size
+    // This represents the physical memory used by user-space apps
+    let used_bytes = (pages_anonymous.saturating_sub(pages_purgeable)) * page_size;
     Some(used_bytes)
 }
 
