@@ -2,10 +2,23 @@
     import SystemDashboard from './SystemDashboard.svelte';
     import IpInfo from './IpInfo.svelte';
     import ProductPrice from './ProductPrice.svelte';
+    import ImageUpload from './ImageUpload.svelte';
+    import { listen } from '@tauri-apps/api/event';
+    import { onMount } from 'svelte';
 
-    type Tab = 'system' | 'ipinfo' | 'price';
+    type Tab = 'system' | 'ipinfo' | 'price' | 'upload';
 
     let activeTab: Tab = 'system';
+
+    onMount(() => {
+        // Listen for switch-to-upload event from Rust
+        const unlisten = listen('switch-to-upload', () => {
+            activeTab = 'upload';
+        });
+        return () => {
+            unlisten.then(fn => fn());
+        };
+    });
 </script>
 
 <div class="h-full flex flex-col p-4 gap-4">
@@ -60,6 +73,21 @@
         >
             🏷️ Price
         </button>
+        <button
+            on:click={() => activeTab = 'upload'}
+            class:flex-1={true}
+            class="py-2 px-4 rounded-md font-medium transition-all"
+            class:bg-white={activeTab === 'upload'}
+            class:dark:bg-gray-700={activeTab === 'upload'}
+            class:shadow-sm={activeTab === 'upload'}
+            class:text-purple-600={activeTab === 'upload'}
+            class:dark:text-purple-400={activeTab === 'upload'}
+            class:text-gray-500={activeTab !== 'upload'}
+            class:hover:text-gray-700={activeTab !== 'upload'}
+            class:dark:hover:text-gray-300={activeTab !== 'upload'}
+        >
+            📤 Upload
+        </button>
     </nav>
 
     {#if activeTab === 'system'}
@@ -68,5 +96,7 @@
         <IpInfo />
     {:else if activeTab === 'price'}
         <ProductPrice />
+    {:else if activeTab === 'upload'}
+        <ImageUpload />
     {/if}
 </div>

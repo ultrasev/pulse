@@ -1,0 +1,32 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "enables the default permissions",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "shell:allow-open",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://cufo.cc"
+        },
+        {
+          "url": "https://cufo.cc/**"
+        },
+        {
+          "url": "https://gateway.ddot.cc"
+        },
+        {
+          "url": "https://gateway.ddot.cc/**"
+        },
+        {
+          "url": "http://REDACTED_HOST:38080/**"
+        }
+      ]
+    }
+  ]
+}
