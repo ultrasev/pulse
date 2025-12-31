@@ -82,7 +82,7 @@
                         <button
                             class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 transition-colors
                                    border-b border-gray-100 dark:border-gray-700 last:border-0
-                                   hover:bg-gray-50 dark:hover:bg-gray-750 disabled:opacity-50 disabled:cursor-not-allowed"
+                                   hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                             on:click={() => switchBranch(branch.name)}
                             disabled={switching}
                         >
