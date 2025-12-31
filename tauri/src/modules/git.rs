@@ -67,6 +67,19 @@ pub fn get_git_branches() -> Result<GitState, String> {
 pub fn switch_git_branch(branch: String) -> Result<String, String> {
     let repo_path = get_claude_path();
 
+    // 先丢弃未提交的更改
+    let _ = Command::new("git")
+        .args(&["checkout", "--", "."])
+        .current_dir(&repo_path)
+        .output();
+
+    // 清除未跟踪的文件
+    let _ = Command::new("git")
+        .args(&["clean", "-fd"])
+        .current_dir(&repo_path)
+        .output();
+
+    // 切换分支
     let output = Command::new("git")
         .arg("checkout")
         .arg(&branch)
