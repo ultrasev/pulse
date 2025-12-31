@@ -141,37 +141,18 @@
     </div>
 
     <!-- Bottom Row: Network -->
-    <div class="p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col flex-1 min-h-0 justify-center">
-        <div class="font-semibold text-gray-500 dark:text-gray-400 text-sm tracking-wider uppercase mb-4">Network Activity</div>
+    <div class="p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col justify-center">
+        <div class="font-semibold text-gray-500 dark:text-gray-400 text-sm tracking-wider uppercase mb-2">Network</div>
 
         {#if stats}
-            <div class="grid grid-cols-2 gap-8 h-full items-center">
-                <!-- Upload -->
-                <div class="flex flex-col items-center justify-center p-4 rounded-xl bg-orange-50/50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-800/30">
-                    <div class="flex items-center gap-2 mb-2">
-                        <div class="p-1.5 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
-                        </div>
-                        <span class="text-sm font-medium text-orange-600 dark:text-orange-400">UPLOAD</span>
-                    </div>
-                    <span class="text-3xl font-bold font-mono text-gray-800 dark:text-gray-200 tracking-tight">{formatSpeed(stats.network_speed_up)}</span>
-                </div>
-
-                <!-- Download -->
-                <div class="flex flex-col items-center justify-center p-4 rounded-xl bg-green-50/50 dark:bg-green-900/10 border border-green-100 dark:border-green-800/30">
-                    <div class="flex items-center gap-2 mb-2">
-                        <div class="p-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-                        </div>
-                        <span class="text-sm font-medium text-green-600 dark:text-green-400">DOWNLOAD</span>
-                    </div>
-                    <span class="text-3xl font-bold font-mono text-gray-800 dark:text-gray-200 tracking-tight">{formatSpeed(stats.network_speed_down)}</span>
-                </div>
+            <div class="font-mono text-lg text-gray-800 dark:text-gray-200 space-y-1">
+                <div>Upload: {formatSpeed(stats.network_speed_up)}</div>
+                <div>Download: {formatSpeed(stats.network_speed_down)}</div>
             </div>
         {:else}
-            <div class="animate-pulse grid grid-cols-2 gap-8 h-full">
-                <div class="bg-gray-200 dark:bg-gray-700 rounded-xl h-full"></div>
-                <div class="bg-gray-200 dark:bg-gray-700 rounded-xl h-full"></div>
+            <div class="animate-pulse space-y-2">
+                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
             </div>
         {/if}
     </div>
