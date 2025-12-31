@@ -7,6 +7,7 @@ on:
 
 jobs:
   release:
+    name: Build (${{ matrix.target }})
     permissions:
       contents: write
     strategy:
@@ -14,9 +15,9 @@ jobs:
       matrix:
         include:
           - platform: macos-latest
-            args: --target aarch64-apple-darwin
+            target: aarch64-apple-darwin
           - platform: macos-latest
-            args: --target x86_64-apple-darwin
+            target: x86_64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 
@@ -31,7 +32,7 @@ jobs:
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: ${{ matrix.target }}
 
       - name: Install dependencies
         run: bun install
@@ -43,7 +44,7 @@ jobs:
         with:
           projectPath: tauri
           tauriScript: bun tauri
-          args: ${{ matrix.args }}
+          args: --target ${{ matrix.target }}
           tagName: ${{ github.ref_name }}
           releaseName: 'Pulse ${{ github.ref_name }}'
           releaseBody: |

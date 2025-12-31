@@ -1,5 +1,5 @@
 cask "pulse" do
-  version "0.0.1"
+  version "0.0.2"
   sha256 :no_check  # 首次发布后用实际 sha256 替换
 
   # Apple Silicon

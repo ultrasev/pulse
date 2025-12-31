@@ -25,7 +25,7 @@
 <div class="h-full flex flex-col p-4 gap-4">
     <header class="flex justify-between items-center">
         <h1 class="text-2xl font-bold">Pulse</h1>
-        <div class="text-xs text-gray-500">v0.0.1</div>
+        <div class="text-xs text-gray-500">v0.0.2</div>
     </header>
 
     <nav class="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
