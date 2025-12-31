@@ -1,6 +1,46 @@
 use tauri::{State, AppHandle};
 use sysinfo::{System, Disks, Networks};
 use crate::modules::{SystemStats, AppState};
+use std::process::Command;
+
+#[cfg(target_os = "macos")]
+fn get_macos_memory_usage() -> Option<u64> {
+    let output = Command::new("vm_stat").output().ok()?;
+    let output_str = String::from_utf8_lossy(&output.stdout);
+
+    let mut pages_active = 0;
+    let mut pages_wired = 0;
+    let mut pages_compressed = 0;
+
+    // Default page size for macOS (x86_64 and arm64 usually 4096 or 16384)
+    // We can fetch it dynamically to be safe
+    let page_size = if let Ok(output) = Command::new("pagesize").output() {
+        String::from_utf8_lossy(&output.stdout).trim().parse::<u64>().unwrap_or(4096)
+    } else {
+        4096
+    };
+
+    for line in output_str.lines() {
+        if line.starts_with("Pages active:") {
+            if let Some(val) = line.split(':').nth(1) {
+                pages_active = val.trim().trim_end_matches('.').parse::<u64>().unwrap_or(0);
+            }
+        } else if line.starts_with("Pages wired down:") {
+            if let Some(val) = line.split(':').nth(1) {
+                pages_wired = val.trim().trim_end_matches('.').parse::<u64>().unwrap_or(0);
+            }
+        } else if line.starts_with("Pages occupied by compressor:") {
+             if let Some(val) = line.split(':').nth(1) {
+                pages_compressed = val.trim().trim_end_matches('.').parse::<u64>().unwrap_or(0);
+            }
+        }
+    }
+
+    // Memory Used = Active + Wired + Compressed
+    // This matches the "Memory Used" graph in Activity Monitor
+    let used_bytes = (pages_active + pages_wired + pages_compressed) * page_size;
+    Some(used_bytes)
+}
 
 #[tauri::command]
 pub fn get_system_stats(state: State<AppState>) -> SystemStats {
@@ -11,8 +51,14 @@ pub fn get_system_stats(state: State<AppState>) -> SystemStats {
     networks.refresh(true);
 
     let cpu_usage = sys.global_cpu_usage();
-    let memory_used = sys.used_memory();
     let memory_total = sys.total_memory();
+
+    // Use platform-specific calculation for macOS, fallback to sysinfo for others
+    #[cfg(target_os = "macos")]
+    let memory_used = get_macos_memory_usage().unwrap_or_else(|| sys.used_memory());
+
+    #[cfg(not(target_os = "macos"))]
+    let memory_used = sys.used_memory();
 
     let disks = Disks::new_with_refreshed_list();
     let mut disk_usage_percent = 0;
