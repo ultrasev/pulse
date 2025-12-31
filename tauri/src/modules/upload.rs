@@ -5,6 +5,7 @@ use base64::Engine;
 use image::{ImageBuffer, RgbaImage};
 use tauri::{Emitter, Manager};
 use crate::modules::UploadResult;
+use crate::modules::config::load_config;
 
 /// Get image from clipboard as base64 data URL
 #[tauri::command]
@@ -61,7 +62,13 @@ pub fn upload_image(image_base64: String, retry_count: Option<u32>) -> Result<Up
 }
 
 fn upload_image_with_retry(image_base64: String, retry_count: u32) -> Result<UploadResult, String> {
-    let url = "http://REDACTED_HOST:38080/api/image";
+    let config = load_config();
+
+    if config.upload.url.is_empty() || config.upload.token.is_empty() {
+        return Err("Upload not configured. Please edit ~/.config/pulse/config.toml".to_string());
+    }
+
+    let url = &config.upload.url;
 
     let base64_data = if image_base64.starts_with("data:image/") {
         image_base64.split(',').nth(1).unwrap_or(&image_base64)
@@ -109,7 +116,7 @@ fn upload_image_with_retry(image_base64: String, retry_count: u32) -> Result<Upl
     log::info!("Sending PUT request to {}", url);
     let response = client
         .put(url)
-        .header("Authorization", "Bearer REDACTED")
+        .header("Authorization", format!("Bearer {}", config.upload.token))
         .multipart(form)
         .send();
 
@@ -127,7 +134,12 @@ fn upload_image_with_retry(image_base64: String, retry_count: u32) -> Result<Upl
 
                     if let Some(url_path) = json["url"].as_str() {
                         log::info!("url_path from API: {}", url_path);
-                        let full_url = format!("http://REDACTED_HOST:38080{}", url_path);
+                        let base = if config.upload.base_url.is_empty() {
+                            url.trim_end_matches("/api/image").to_string()
+                        } else {
+                            config.upload.base_url.clone()
+                        };
+                        let full_url = format!("{}{}", base, url_path);
                         log::info!("Final image URL: {}", full_url);
 
                         let filename = json["originalFileName"].as_str().unwrap_or("image.png");

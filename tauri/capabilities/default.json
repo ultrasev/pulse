@@ -12,19 +12,10 @@
       "identifier": "http:default",
       "allow": [
         {
-          "url": "https://cufo.cc"
+          "url": "http://**"
         },
         {
-          "url": "https://cufo.cc/**"
-        },
-        {
-          "url": "https://gateway.ddot.cc"
-        },
-        {
-          "url": "https://gateway.ddot.cc/**"
-        },
-        {
-          "url": "http://REDACTED_HOST:38080/**"
+          "url": "https://**"
         }
       ]
     }

@@ -4,6 +4,7 @@ pub mod upload;
 pub mod tray;
 pub mod utils;
 pub mod git;
+pub mod config;
 
 // Shared types and state
 use std::sync::Mutex;

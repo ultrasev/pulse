@@ -1,6 +1,12 @@
-# System Monitor
+# Pulse
 
 一个基于 Tauri 的轻量级系统监控桌面应用。
+
+## 安装
+
+```bash
+brew install --cask ultrasev/tap/pulse
+```
 
 ## 功能
 

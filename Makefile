@@ -8,7 +8,7 @@ build:
 
 install:
 	@echo "Installing to /Applications..."
-	cp -r tauri/target/release/bundle/macos/system-monitor.app /Applications/
+	cp -r tauri/target/release/bundle/macos/Pulse.app /Applications/
 	@echo "Installation complete!"
 
 clean:

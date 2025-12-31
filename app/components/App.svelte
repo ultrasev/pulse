@@ -24,7 +24,7 @@
 
 <div class="h-full flex flex-col p-4 gap-4">
     <header class="flex justify-between items-center">
-        <h1 class="text-2xl font-bold">System Monitor</h1>
+        <h1 class="text-2xl font-bold">Pulse</h1>
         <div class="text-xs text-gray-500">v0.0.1</div>
     </header>
 
