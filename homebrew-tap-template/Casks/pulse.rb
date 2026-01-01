@@ -1,6 +1,6 @@
 cask "pulse" do
   version "0.0.4"
-  sha256 :no_check  # 首次发布后用实际 sha256 替换
+  sha256 :no_check
 
   # Apple Silicon
   if Hardware::CPU.arm?
