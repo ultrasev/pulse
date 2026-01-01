@@ -4,7 +4,8 @@ dev:
 	bun tauri dev
 
 build:
-	bun tauri build
+	bun tauri build --bundles app
+	@echo "Built: tauri/target/release/bundle/macos/Pulse.app"
 
 install:
 	@echo "Installing to /Applications..."

@@ -71,35 +71,3 @@ pub fn load_config() -> Config {
         }
     }
 }
-
-/// Create default config file if not exists
-#[tauri::command]
-pub fn init_config() -> Result<String, String> {
-    let config_path = get_config_path();
-
-    if config_path.exists() {
-        return Ok(format!("Config already exists at {:?}", config_path));
-    }
-
-    // Create parent directory
-    if let Some(parent) = config_path.parent() {
-        fs::create_dir_all(parent).map_err(|e| format!("Failed to create config dir: {}", e))?;
-    }
-
-    let default_config = r#"[upload]
-url = "https://your-upload-server.com/api/image"
-token = "your-token-here"
-base_url = "https://your-upload-server.com"
-"#;
-
-    fs::write(&config_path, default_config)
-        .map_err(|e| format!("Failed to write config: {}", e))?;
-
-    Ok(format!("Config created at {:?}", config_path))
-}
-
-/// Get config file path (for frontend)
-#[tauri::command]
-pub fn get_config_file_path() -> String {
-    get_config_path().to_string_lossy().to_string()
-}
