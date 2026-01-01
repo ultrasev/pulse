@@ -119,18 +119,18 @@
         <!-- 信息卡片网格 -->
         <div class="grid grid-cols-2 gap-4 flex-1">
             <!-- 位置 -->
-            <div class="group p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-cyan-300 dark:hover:border-cyan-600 transition-all">
+            <div class="group p-5 bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md hover:border-cyan-300 transition-all">
                 <div class="flex items-center gap-2 mb-3">
-                    <div class="p-2 bg-cyan-100 dark:bg-cyan-900/30 rounded-lg">
-                        <svg class="w-5 h-5 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-cyan-100 rounded-lg">
+                        <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Location</span>
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Location</span>
                 </div>
                 <div class="space-y-1">
-                    <div class="text-xl font-bold text-gray-900 dark:text-white">
+                    <div class="text-xl font-bold text-gray-900">
                         {#if ipData?.country}
                             <span class="mr-2">{countryToFlag(ipData.country)}</span>
                         {/if}
@@ -142,17 +142,17 @@
             </div>
 
             <!-- ISP -->
-            <div class="group p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-600 transition-all">
+            <div class="group p-5 bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md hover:border-purple-300 transition-all">
                 <div class="flex items-center gap-2 mb-3">
-                    <div class="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                        <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                         </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">ISP</span>
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">ISP</span>
                 </div>
                 <div class="space-y-1">
-                    <div class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-2">
+                    <div class="text-sm font-semibold text-gray-900 line-clamp-2">
                         {ipData?.ISP}
                     </div>
                     <div class="text-xs text-gray-400">ASN: {ipData?.ASN}</div>
@@ -160,39 +160,39 @@
             </div>
 
             <!-- 坐标 -->
-            <div class="group p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-green-300 dark:hover:border-green-600 transition-all">
+            <div class="group p-5 bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md hover:border-green-300 transition-all">
                 <div class="flex items-center gap-2 mb-3">
-                    <div class="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                         </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Coordinates</span>
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Coordinates</span>
                 </div>
                 <div class="font-mono text-sm space-y-1">
                     <div class="flex items-center gap-2">
                         <span class="text-gray-400">N</span>
-                        <span class="text-gray-900 dark:text-white">{ipData?.latitude || '0.00'}</span>
+                        <span class="text-gray-900">{ipData?.latitude || '0.00'}</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-gray-400">E</span>
-                        <span class="text-gray-900 dark:text-white">{ipData?.longitude || '0.00'}</span>
+                        <span class="text-gray-900">{ipData?.longitude || '0.00'}</span>
                     </div>
                 </div>
             </div>
 
             <!-- 时区 -->
-            <div class="group p-5 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-orange-300 dark:hover:border-orange-600 transition-all">
+            <div class="group p-5 bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md hover:border-orange-300 transition-all">
                 <div class="flex items-center gap-2 mb-3">
-                    <div class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-                        <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-orange-100 rounded-lg">
+                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Timezone</span>
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Timezone</span>
                 </div>
                 <div class="space-y-1">
-                    <div class="text-lg font-bold text-gray-900 dark:text-white">
+                    <div class="text-lg font-bold text-gray-900">
                         {ipData?.timezone}
                     </div>
                     <div class="text-xs text-gray-400">Postal: {ipData?.postalCode || 'N/A'}</div>
@@ -204,13 +204,13 @@
         <button
             on:click={() => fetchIpInfo()}
             disabled={isRefreshing}
-            class="group relative w-full py-3.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 rounded-2xl transition-all font-medium flex items-center justify-center gap-2 overflow-hidden"
+            class="group relative w-full py-3.5 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 rounded-2xl transition-all font-medium flex items-center justify-center gap-2 overflow-hidden"
         >
             {#if isRefreshing}
                 <div class="animate-spin rounded-full h-5 w-5 border-2 border-gray-500 border-t-transparent"></div>
                 <span>刷新中...</span>
             {:else}
-                <svg class="w-5 h-5 text-gray-600 dark:text-gray-300 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-gray-600 group-hover:rotate-180 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                 </svg>
                 <span>Refresh</span>

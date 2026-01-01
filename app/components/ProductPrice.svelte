@@ -75,7 +75,7 @@
             type="text"
             bind:value={inputSku}
             placeholder="输入京东 SKU ID"
-            class="flex-1 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+            class="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
         <button
             type="submit"
@@ -87,7 +87,7 @@
     </form>
 
     {#if lastUpdate && !loading}
-        <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 px-2">
+        <div class="flex items-center justify-between text-xs text-gray-500 px-2">
             <span>更新于 {productService.getTimeAgo(lastUpdate)}</span>
             {#if isRefreshing}
                 <span class="text-orange-500">更新中...</span>
@@ -111,7 +111,7 @@
         </div>
     {:else if productData && !loading}
         <div class="flex flex-col gap-4 flex-1 overflow-auto">
-            <div class="flex gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex gap-4 p-4 bg-white rounded-xl shadow-sm border border-gray-200">
                 {#if productData.data.product.imageUrl}
                     <img
                         src={productData.data.product.imageUrl}
@@ -121,7 +121,7 @@
                 {/if}
                 <div class="flex-1">
                     <h2 class="text-xl font-bold mb-1">{productData.data.product.name}</h2>
-                    <div class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    <div class="text-sm text-gray-500 mb-2">
                         {productData.data.product.variant}
                     </div>
                     <a
@@ -149,35 +149,35 @@
             </div>
 
             <div class="grid grid-cols-3 gap-3">
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">最低价</div>
-                    <div class="text-xl font-bold text-green-600 dark:text-green-400">
+                <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="text-xs text-gray-500 mb-1">最低价</div>
+                    <div class="text-xl font-bold text-green-600">
                         ¥{productData.data.stats.minPrice}
                     </div>
                 </div>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">最高价</div>
-                    <div class="text-xl font-bold text-red-600 dark:text-red-400">
+                <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="text-xs text-gray-500 mb-1">最高价</div>
+                    <div class="text-xl font-bold text-red-600">
                         ¥{productData.data.stats.maxPrice}
                     </div>
                 </div>
-                <div class="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">平均价</div>
-                    <div class="text-xl font-bold text-blue-600 dark:text-blue-400">
+                <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-200">
+                    <div class="text-xs text-gray-500 mb-1">平均价</div>
+                    <div class="text-xl font-bold text-blue-600">
                         ¥{parseFloat(productData.data.stats.avgPrice).toFixed(2)}
                     </div>
                 </div>
             </div>
 
             <div class="flex-1">
-                <h3 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">
+                <h3 class="text-sm font-semibold text-gray-600 mb-3">
                     价格历史 ({productData.data.stats.recordCount} 条记录)
                 </h3>
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div class="max-h-48 overflow-auto">
                         {#if productData.data.priceHistory.length > 0}
                             <table class="w-full text-sm">
-                                <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0">
+                                <thead class="bg-gray-100 sticky top-0">
                                     <tr>
                                         <th class="px-4 py-2 text-left">价格</th>
                                         <th class="px-4 py-2 text-left">时间</th>
@@ -186,7 +186,7 @@
                                 <tbody>
                                     {#each productData.data.priceHistory as record, index}
                                         <tr
-                                            class="border-t border-gray-200 dark:border-gray-700"
+                                            class="border-t border-gray-200"
                                         >
                                             <td class="px-4 py-2 font-mono font-semibold">
                                                 ¥{record.price}

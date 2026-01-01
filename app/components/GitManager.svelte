@@ -55,7 +55,7 @@
 </script>
 
 <div class="h-full flex flex-col gap-4">
-    <div class="p-4 bg-gray-100 dark:bg-gray-900 h-full flex flex-col rounded-xl overflow-hidden">
+    <div class="p-4 bg-gray-100 h-full flex flex-col rounded-xl overflow-hidden">
         <h2 class="text-sm uppercase text-gray-500 font-semibold mb-2 ml-4 tracking-wider">Claude Models</h2>
 
         {#if loading && !state}
@@ -63,31 +63,31 @@
                 <div class="text-gray-500 animate-pulse">Loading settings...</div>
             </div>
         {:else if error}
-            <div class="p-4 mx-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <div class="text-red-600 dark:text-red-400 font-mono text-sm break-all mb-2">
+            <div class="p-4 mx-4 bg-red-50 border border-red-200 rounded-lg">
+                <div class="text-red-600 font-mono text-sm break-all mb-2">
                     {error}
                 </div>
                 <button
                     on:click={fetchBranches}
-                    class="px-4 py-2 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-100 rounded-md hover:bg-red-200 dark:hover:bg-red-700 transition-colors text-sm font-medium"
+                    class="px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors text-sm font-medium"
                 >
                     Retry
                 </button>
             </div>
         {:else if state}
             <div class="flex-1 overflow-y-auto">
-                <div class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-sm">
+                <div class="bg-white rounded-xl overflow-hidden shadow-sm">
                     {#each state.branches as branch, i}
                         <!-- Row -->
                         <button
-                            class="w-full flex items-center justify-between p-4 bg-white dark:bg-gray-800 transition-colors
-                                   border-b border-gray-100 dark:border-gray-700 last:border-0
-                                   hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="w-full flex items-center justify-between p-4 bg-white transition-colors
+                                   border-b border-gray-100 last:border-0
+                                   hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                             on:click={() => switchBranch(branch.name)}
                             disabled={switching}
                         >
                             <!-- Left: Label -->
-                            <span class="text-base font-medium text-gray-900 dark:text-gray-100">
+                            <span class="text-base font-medium text-gray-900">
                                 {branch.name}
                             </span>
 
@@ -101,7 +101,7 @@
                                 class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2
                                 {(branch.current && pendingBranch === null) || pendingBranch === branch.name
                                     ? 'bg-green-500'
-                                    : 'bg-gray-200 dark:bg-gray-600'}"
+                                    : 'bg-gray-200'}"
                             >
                                 <span class="sr-only">Use setting</span>
                                 <span

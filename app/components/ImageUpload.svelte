@@ -79,8 +79,8 @@
 <div class="h-full flex flex-col p-4">
     <header class="mb-4">
         <h2 class="text-xl font-bold">Image Upload</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-            Press <kbd class="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded"
+        <p class="text-sm text-gray-500">
+            Press <kbd class="px-2 py-1 bg-gray-200 rounded"
                 >Shift+Cmd+U</kbd
             > to upload image from clipboard
         </p>
@@ -108,7 +108,7 @@
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                 </svg>
-                <p class="text-gray-600 dark:text-gray-400">
+                <p class="text-gray-600">
                     Uploading image...
                 </p>
             </div>
@@ -117,12 +117,12 @@
         <div class="flex-1 flex items-center justify-center">
             {#if uploadResult.success}
                 <div
-                    class="w-full max-w-md p-6 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800"
+                    class="w-full max-w-md p-6 bg-green-50 rounded-lg border border-green-200"
                 >
                     <div class="flex items-center gap-3 mb-4">
                         <span class="text-3xl">✓</span>
                         <h3
-                            class="text-lg font-bold text-green-800 dark:text-green-200"
+                            class="text-lg font-bold text-green-800"
                         >
                             Upload Successful!
                         </h3>
@@ -130,11 +130,11 @@
 
                     <!-- Image Preview -->
                     <div class="mb-4">
-                        <span class="text-sm text-gray-500 dark:text-gray-400"
+                        <span class="text-sm text-gray-500"
                             >Preview</span
                         >
                         <div
-                            class="mt-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                            class="mt-2 rounded-lg overflow-hidden border border-gray-200 bg-white"
                         >
                             <img
                                 src={uploadResult.url}
@@ -147,7 +147,7 @@
                     <div class="space-y-3">
                         <div>
                             <span
-                                class="text-sm text-gray-500 dark:text-gray-400"
+                                class="text-sm text-gray-500"
                                 >Filename</span
                             >
                             <p class="font-medium">{uploadResult.filename}</p>
@@ -155,7 +155,7 @@
 
                         <div>
                             <span
-                                class="text-sm text-gray-500 dark:text-gray-400"
+                                class="text-sm text-gray-500"
                                 >Size</span
                             >
                             <p class="font-medium">{uploadResult.size}</p>
@@ -163,12 +163,12 @@
 
                         <div>
                             <span
-                                class="text-sm text-gray-500 dark:text-gray-400"
+                                class="text-sm text-gray-500"
                                 >URL</span
                             >
                             <div class="flex gap-2 mt-1">
                                 <code
-                                    class="flex-1 px-3 py-2 bg-white dark:bg-gray-800 rounded border text-sm overflow-x-auto"
+                                    class="flex-1 px-3 py-2 bg-white rounded border text-sm overflow-x-auto"
                                 >
                                     {uploadResult.url}
                                 </code>
@@ -193,17 +193,17 @@
                 </div>
             {:else}
                 <div
-                    class="w-full max-w-md p-6 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800"
+                    class="w-full max-w-md p-6 bg-red-50 rounded-lg border border-red-200"
                 >
                     <div class="flex items-center gap-3 mb-4">
                         <span class="text-3xl">✕</span>
                         <h3
-                            class="text-lg font-bold text-red-800 dark:text-red-200"
+                            class="text-lg font-bold text-red-800"
                         >
                             Upload Failed
                         </h3>
                     </div>
-                    <p class="text-gray-700 dark:text-gray-300">
+                    <p class="text-gray-700">
                         {uploadResult.error}
                     </p>
                 </div>
@@ -211,7 +211,7 @@
         </div>
     {:else}
         <div class="flex-1 flex items-center justify-center">
-            <div class="text-center text-gray-400 dark:text-gray-600">
+            <div class="text-center text-gray-400">
                 <svg
                     class="w-24 h-24 mx-auto mb-4 opacity-50"
                     fill="none"
