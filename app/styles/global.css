@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+/* Dark mode: 用 CSS 变量覆盖 Tailwind 默认颜色 */
+html.dark {
+  /* 背景色：浅变深 */
+  --color-white: oklch(21% .034 264.665);      /* 原 gray-900 */
+  --color-gray-50: oklch(27.8% .033 256.848);  /* 原 gray-800 */
+  --color-gray-100: oklch(27.8% .033 256.848); /* 原 gray-800 */
+  --color-gray-200: oklch(37.3% .034 259.733); /* 原 gray-700 */
+  --color-gray-300: oklch(44.6% .03 256.802);  /* 原 gray-600 */
+
+  /* 文字色：深变浅 */
+  --color-gray-500: oklch(70.7% .022 261.325); /* 原 gray-400 */
+  --color-gray-600: oklch(87.2% .01 258.338);  /* 原 gray-300 */
+  --color-gray-700: oklch(92.8% .006 264.531); /* 原 gray-200 */
+  --color-gray-800: oklch(96.7% .003 264.542); /* 原 gray-100 */
+  --color-gray-900: #fff;                       /* 原 white */
+}
