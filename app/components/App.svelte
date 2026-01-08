@@ -41,7 +41,7 @@
             >
                 {#if isDark}☀️{:else}🌙{/if}
             </button>
-            <div class="text-xs text-gray-500">v0.0.5</div>
+            <div class="text-xs text-gray-500">v0.0.6</div>
         </div>
     </header>
 
