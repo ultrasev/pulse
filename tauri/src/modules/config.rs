@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
@@ -6,6 +6,8 @@ use std::path::PathBuf;
 pub struct Config {
     #[serde(default)]
     pub upload: UploadConfig,
+    #[serde(default)]
+    pub mijia: MijiaConfig,
 }
 
 #[derive(Debug, Deserialize)]
@@ -22,6 +24,21 @@ impl Default for UploadConfig {
             url: String::new(),
             token: String::new(),
             base_url: String::new(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct MijiaConfig {
+    pub api_base: String,
+    pub api_key: String,
+}
+
+impl Default for MijiaConfig {
+    fn default() -> Self {
+        Self {
+            api_base: String::new(),
+            api_key: String::new(),
         }
     }
 }
@@ -70,4 +87,10 @@ pub fn load_config() -> Config {
             Config::default()
         }
     }
+}
+
+/// Get mijia config for frontend
+#[tauri::command]
+pub fn get_mijia_config() -> MijiaConfig {
+    load_config().mijia
 }

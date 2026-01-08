@@ -5,6 +5,7 @@ pub mod tray;
 pub mod utils;
 pub mod git;
 pub mod config;
+pub mod mijia;
 
 // Shared types and state
 use std::sync::Mutex;
