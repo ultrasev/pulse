@@ -14,13 +14,7 @@
     let isOperating = false;
 
     // Volume control
-    let volumeInput: string = "50";
     let pendingVolume: number = 50;
-    let isSettingVolume = false;
-
-    // Radio URL input
-    let radioUrl: string = "";
-    let isPlayingRadio = false;
 
     const fetchStatus = async (isBackground = false) => {
         if (!isBackground) loading = true;
@@ -36,7 +30,6 @@
             speaker = status;
             playbackState = state;
             if (status) {
-                volumeInput = String(status.volume);
                 pendingVolume = status.volume;
             }
         } catch (e) {
@@ -88,32 +81,16 @@
         if (success) await fetchStatus(true);
     };
 
-    const handleSetVolume = async () => {
-        const vol = Number(volumeInput);
-        if (isNaN(vol) || vol < 5 || vol > 100) return;
-
-        isSettingVolume = true;
-        const success = await mijiaService.setVolume(vol);
-        isSettingVolume = false;
-
-        if (success) {
-            pendingVolume = vol;
-            await fetchStatus(true);
-        }
-    };
-
     const handleVolumeSliderChange = async (e: Event) => {
         const input = e.target as HTMLInputElement;
         const vol = Number(input.value);
         pendingVolume = vol;
-        volumeInput = String(vol);
 
         // Debounce: only set after user stops sliding
         if (volumeTimer) clearTimeout(volumeTimer);
         volumeTimer = setTimeout(async () => {
             const success = await mijiaService.setVolume(vol);
             if (success) await fetchStatus(true);
-            else volumeInput = String(speaker?.volume ?? 50);
         }, 300);
     };
 
@@ -130,25 +107,6 @@
         if (!speaker) return;
         const newMode = !speaker.sleepMode;
         const success = await mijiaService.setSleepMode(newMode);
-        if (success) await fetchStatus(true);
-    };
-
-    const handlePlayRadio = async () => {
-        if (!radioUrl.trim()) return;
-        isPlayingRadio = true;
-        const success = await mijiaService.speakerPlayRadio(radioUrl);
-        isPlayingRadio = false;
-        if (success) {
-            radioUrl = "";
-            await fetchStatus(true);
-        }
-    };
-
-    const handleStopAlarm = async () => {
-        if (isOperating) return;
-        isOperating = true;
-        const success = await mijiaService.speakerStopAlarm();
-        isOperating = false;
         if (success) await fetchStatus(true);
     };
 
@@ -306,83 +264,38 @@
             </button>
 
             <!-- 音量滑块 -->
-            <div class="space-y-3">
-                <input
-                    type="range"
-                    min="5"
-                    max="100"
-                    value={pendingVolume}
-                    on:input={handleVolumeSliderChange}
-                    disabled={speaker?.mute || isSettingVolume}
-                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500 disabled:opacity-50"
-                />
-
-                <div class="flex gap-2">
-                    <input
-                        type="number"
-                        min="5"
-                        max="100"
-                        bind:value={volumeInput}
-                        class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <button
-                        on:click={handleSetVolume}
-                        disabled={isSettingVolume}
-                        class="px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg transition-colors text-sm font-medium"
-                    >
-                        {isSettingVolume ? '设置中...' : '设置'}
-                    </button>
-                </div>
-            </div>
+            <input
+                type="range"
+                min="5"
+                max="100"
+                value={pendingVolume}
+                on:input={handleVolumeSliderChange}
+                disabled={speaker?.mute}
+                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500 disabled:opacity-50"
+            />
         </div>
 
-        <!-- 播放网络广播 -->
+        <!-- 睡眠模式 -->
         <div class="p-5 bg-white rounded-2xl shadow-sm border border-gray-200">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="p-2 bg-green-100 rounded-lg">
-                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-700">Sleep Mode</span>
+                        <div class="text-xs text-gray-400">Reduce volume at night</div>
+                    </div>
                 </div>
-                <span class="text-sm font-medium text-gray-700">网络广播</span>
-            </div>
-
-            <div class="flex gap-2">
-                <input
-                    type="text"
-                    bind:value={radioUrl}
-                    placeholder="输入音频 URL"
-                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
                 <button
-                    on:click={handlePlayRadio}
-                    disabled={isPlayingRadio || !radioUrl.trim()}
-                    class="px-4 py-2 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white rounded-lg transition-colors text-sm font-medium"
+                    on:click={toggleSleepMode}
+                    class="px-4 py-2 {speaker?.sleepMode ? 'bg-purple-500 hover:bg-purple-600' : 'bg-gray-200 hover:bg-gray-300'} text-white rounded-lg transition-colors text-sm font-medium"
                 >
-                    {isPlayingRadio ? '播放中...' : '播放'}
+                    {speaker?.sleepMode ? 'On' : 'Off'}
                 </button>
             </div>
-        </div>
-
-        <!-- 其他设置 -->
-        <div class="grid grid-cols-2 gap-3">
-            <button
-                on:click={toggleSleepMode}
-                class="p-4 bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md hover:border-purple-300 transition-all"
-            >
-                <div class="text-2xl mb-2">🌙</div>
-                <div class="text-sm font-medium text-gray-700">睡眠模式</div>
-                <div class="text-xs text-gray-400 mt-1">{speaker?.sleepMode ? '已开启' : '已关闭'}</div>
-            </button>
-
-            <button
-                on:click={handleStopAlarm}
-                class="p-4 bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-md hover:border-red-300 transition-all"
-            >
-                <div class="text-2xl mb-2">⏰</div>
-                <div class="text-sm font-medium text-gray-700">停止闹钟</div>
-                <div class="text-xs text-gray-400 mt-1">停止响铃</div>
-            </button>
         </div>
 
         <!-- 刷新按钮 -->
@@ -393,7 +306,7 @@
         >
             {#if isRefreshing}
                 <div class="animate-spin rounded-full h-5 w-5 border-2 border-gray-500 border-t-transparent"></div>
-                <span>刷新中...</span>
+                <span>Refreshing...</span>
             {:else}
                 <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
