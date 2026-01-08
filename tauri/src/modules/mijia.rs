@@ -1,4 +1,5 @@
 use std::time::Duration;
+use std::sync::OnceLock;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -14,24 +15,9 @@ pub struct MijiaActionResponse {
     pub name: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct MijiaPropResponse<T> {
-    pub did: String,
-    pub name: String,
-    pub value: T,
-}
-
 #[derive(Debug, Serialize)]
 pub struct MijiaSetPropRequest<T> {
     pub value: T,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct MijiaSetPropResponse<T> {
-    pub did: String,
-    pub name: String,
-    pub value: T,
-    pub success: bool,
 }
 
 const SPEAKER_DEVICE_ID: &str = "545918099";
@@ -44,11 +30,19 @@ fn get_client() -> Result<reqwest::blocking::Client, String> {
 }
 
 fn get_config() -> Result<(String, String), String> {
-    let config = super::config::load_config();
-    if config.mijia.api_base.is_empty() || config.mijia.api_key.is_empty() {
-        return Err("Mijia API not configured".to_string());
-    }
-    Ok((config.mijia.api_base, config.mijia.api_key))
+    static CACHED: OnceLock<Option<(String, String)>> = OnceLock::new();
+
+    let cached = CACHED.get_or_init(|| {
+        let config = super::config::load_config();
+        if config.mijia.api_base.is_empty() || config.mijia.api_key.is_empty() {
+            None
+        } else {
+            log::info!("Mijia config cached: {}", config.mijia.api_base);
+            Some((config.mijia.api_base, config.mijia.api_key))
+        }
+    });
+
+    cached.as_ref().cloned().ok_or_else(|| "Mijia API not configured".to_string())
 }
 
 /// Execute device action
