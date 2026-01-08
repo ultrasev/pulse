@@ -78,15 +78,19 @@
         </button>
     </nav>
 
-    {#if activeTab === "system"}
+    <div class:hidden={activeTab !== "system"}>
         <SystemDashboard />
-    {:else if activeTab === "ipinfo"}
+    </div>
+    <div class:hidden={activeTab !== "ipinfo"}>
         <IpInfo />
-    {:else if activeTab === "upload"}
+    </div>
+    <div class:hidden={activeTab !== "upload"}>
         <ImageUpload />
-    {:else if activeTab === "git"}
+    </div>
+    <div class:hidden={activeTab !== "git"}>
         <GitManager />
-    {:else if activeTab === "xiaomi"}
+    </div>
+    <div class:hidden={activeTab !== "xiaomi"}>
         <XiaomiSpeaker />
-    {/if}
+    </div>
 </div>
