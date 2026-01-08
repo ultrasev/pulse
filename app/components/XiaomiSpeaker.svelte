@@ -10,6 +10,9 @@
     let isRefreshing = false;
     let error: string | null = null;
 
+    // Operation state
+    let isOperating = false;
+
     // Volume control
     let volumeInput: string = "50";
     let pendingVolume: number = 50;
@@ -46,24 +49,42 @@
     };
 
     const handlePlay = async () => {
-        console.log('handlePlay clicked');
+        if (isOperating) return;
+        isOperating = true;
         const success = await mijiaService.speakerPlay();
-        console.log('play result:', success);
-        if (success) await fetchStatus(true);
+        if (success) {
+            // Wait a bit for the state to update
+            await new Promise(r => setTimeout(r, 300));
+            await fetchStatus(true);
+        }
+        isOperating = false;
     };
 
     const handlePause = async () => {
+        if (isOperating) return;
+        isOperating = true;
         const success = await mijiaService.speakerPause();
-        if (success) await fetchStatus(true);
+        if (success) {
+            // Wait a bit for the state to update
+            await new Promise(r => setTimeout(r, 300));
+            await fetchStatus(true);
+        }
+        isOperating = false;
     };
 
     const handleNext = async () => {
+        if (isOperating) return;
+        isOperating = true;
         const success = await mijiaService.speakerNext();
+        isOperating = false;
         if (success) await fetchStatus(true);
     };
 
     const handlePrevious = async () => {
+        if (isOperating) return;
+        isOperating = true;
         const success = await mijiaService.speakerPrevious();
+        isOperating = false;
         if (success) await fetchStatus(true);
     };
 
@@ -124,9 +145,28 @@
     };
 
     const handleStopAlarm = async () => {
+        if (isOperating) return;
+        isOperating = true;
         const success = await mijiaService.speakerStopAlarm();
+        isOperating = false;
         if (success) await fetchStatus(true);
     };
+
+    // Reactive state for UI
+    $: displayStatus = (() => {
+        if (isOperating) return 'Buffering...';
+        if (!playbackState) return 'Unknown';
+        const state = playbackState.toLowerCase();
+        switch (state) {
+            case 'playing': return 'Playing';
+            case 'paused': return 'Paused';
+            case 'stopped': return 'Stopped';
+            case 'buffering': return 'Buffering...';
+            default: return playbackState;
+        }
+    })();
+
+    $: isCurrentlyPlaying = playbackState?.toLowerCase() === 'playing';
 
     onMount(() => {
         fetchStatus();
@@ -179,44 +219,59 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                 </div>
-                <span class="text-sm font-medium text-gray-700">播放控制</span>
+                <span class="text-sm font-medium text-gray-700">Playback</span>
+                <span class="ml-auto text-sm font-semibold {isCurrentlyPlaying ? 'text-green-600' : 'text-gray-500'}">{displayStatus}</span>
             </div>
 
             <div class="flex items-center justify-center gap-4">
                 <button
                     on:click={handlePrevious}
-                    class="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all hover:scale-105"
-                    title="上一首"
+                    disabled={isOperating}
+                    class="p-3 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all hover:scale-105"
+                    title="Previous"
                 >
                     <svg class="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
                     </svg>
                 </button>
 
-                <button
-                    on:click={handlePause}
-                    class="p-4 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all hover:scale-105"
-                    title="暂停"
-                >
-                    <svg class="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-                    </svg>
-                </button>
-
-                <button
-                    on:click={handlePlay}
-                    class="p-4 bg-orange-500 hover:bg-orange-600 rounded-xl transition-all hover:scale-105 shadow-lg"
-                    title="播放"
-                >
-                    <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                    </svg>
-                </button>
+                {#if isCurrentlyPlaying}
+                    <button
+                        on:click={handlePause}
+                        disabled={isOperating}
+                        class="p-4 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all hover:scale-105 flex items-center gap-2"
+                        title="Pause"
+                    >
+                        {#if isOperating}
+                            <div class="animate-spin rounded-full h-5 w-5 border-2 border-gray-600 border-t-transparent"></div>
+                        {:else}
+                            <svg class="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                            </svg>
+                        {/if}
+                    </button>
+                {:else}
+                    <button
+                        on:click={handlePlay}
+                        disabled={isOperating}
+                        class="p-4 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all hover:scale-105 shadow-lg flex items-center gap-2"
+                        title="Play"
+                    >
+                        {#if isOperating}
+                            <div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                        {:else}
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                            </svg>
+                        {/if}
+                    </button>
+                {/if}
 
                 <button
                     on:click={handleNext}
-                    class="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all hover:scale-105"
-                    title="下一首"
+                    disabled={isOperating}
+                    class="p-3 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all hover:scale-105"
+                    title="Next"
                 >
                     <svg class="w-6 h-6 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>

@@ -11,7 +11,9 @@ pub struct MijiaActionRequest {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MijiaActionResponse {
     pub success: bool,
+    #[serde(default)]
     pub did: String,
+    #[serde(default)]
     pub name: String,
 }
 
