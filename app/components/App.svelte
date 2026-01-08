@@ -4,10 +4,11 @@
     import ProductPrice from "./ProductPrice.svelte";
     import ImageUpload from "./ImageUpload.svelte";
     import GitManager from "./GitManager.svelte";
+    import XiaomiSpeaker from "./XiaomiSpeaker.svelte";
     import { listen } from "@tauri-apps/api/event";
     import { onMount } from "svelte";
 
-    type Tab = "system" | "ipinfo" | "upload" | "git";
+    type Tab = "system" | "ipinfo" | "upload" | "git" | "xiaomi";
 
     let activeTab: Tab = "system";
     let isDark = false;
@@ -69,6 +70,12 @@
         >
             🤖 Claude Models
         </button>
+        <button
+            on:click={() => (activeTab = "xiaomi")}
+            class="flex-1 py-2 px-4 rounded-md font-medium transition-all {activeTab === 'xiaomi' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500 hover:text-gray-700'}"
+        >
+            🔊 Speaker
+        </button>
     </nav>
 
     {#if activeTab === "system"}
@@ -79,5 +86,7 @@
         <ImageUpload />
     {:else if activeTab === "git"}
         <GitManager />
+    {:else if activeTab === "xiaomi"}
+        <XiaomiSpeaker />
     {/if}
 </div>

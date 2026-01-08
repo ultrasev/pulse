@@ -10,6 +10,8 @@ use modules::AppState;
 use modules::system::{get_system_stats, start_tray_update_loop};
 use modules::upload::{get_clipboard_image, upload_image, handle_upload_shortcut};
 use modules::git::{get_git_branches, switch_git_branch};
+use modules::config::get_mijia_config;
+use modules::mijia::{execute_device_action, get_device_prop, set_device_prop, get_playback_state};
 
 // Native imports
 use objc2::MainThreadMarker;
@@ -121,7 +123,12 @@ pub fn run() {
             get_clipboard_image,
             upload_image,
             get_git_branches,
-            switch_git_branch
+            switch_git_branch,
+            get_mijia_config,
+            execute_device_action,
+            get_device_prop,
+            set_device_prop,
+            get_playback_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
