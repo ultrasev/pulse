@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { invoke } from '@tauri-apps/api/core';
+    import * as zai from '../lib/services/zai';
 
     interface SystemStats {
         cpu_usage: number;
@@ -13,6 +14,11 @@
 
     let stats: SystemStats | null = null;
     let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    let zaiQuota: zai.ZaiQuota | null = null;
+    let zaiError = '';
+    let zaiToken = '';
+    let showZaiConfig = false;
 
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return '0 B';
@@ -47,9 +53,33 @@
         }
     };
 
+    const fetchZaiQuota = async () => {
+        try {
+            zaiError = '';
+            zaiQuota = await zai.fetchZaiQuota();
+        } catch (e) {
+            zaiError = e instanceof Error ? e.message : String(e);
+        }
+    };
+
+    const saveZaiToken = () => {
+        zai.setBearer(zaiToken.trim());
+        showZaiConfig = false;
+        fetchZaiQuota();
+    };
+
+    const formatResetIn = (minutes: number | null): string => {
+        if (minutes == null) return 'N/A';
+        const h = Math.floor(minutes / 60);
+        const m = minutes % 60;
+        return `${h}h ${m}m`;
+    };
+
     onMount(() => {
         fetchStats();
         intervalId = setInterval(fetchStats, 5000);
+        zaiToken = zai.getBearer();
+        if (zai.hasBearer()) fetchZaiQuota();
     });
 
     onDestroy(() => {
@@ -154,6 +184,67 @@
                 <div class="h-6 bg-gray-200 rounded w-1/3"></div>
                 <div class="h-6 bg-gray-200 rounded w-1/3"></div>
             </div>
+        {/if}
+    </div>
+
+    <!-- ZAI Subscription -->
+    <div class="p-5 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-center">
+        <div class="flex justify-between items-center mb-2">
+            <div class="font-semibold text-gray-500 text-sm tracking-wider uppercase">Z.AI Subscription</div>
+            <button
+                class="text-xs text-gray-400 hover:text-gray-600"
+                on:click={() => (showZaiConfig = !showZaiConfig)}
+                title="配置 Bearer Token"
+            >⚙️</button>
+        </div>
+
+        {#if showZaiConfig}
+            <div class="flex gap-2 mb-3">
+                <input
+                    type="password"
+                    bind:value={zaiToken}
+                    placeholder="Bearer Token"
+                    class="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-blue-400"
+                />
+                <button
+                    class="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    on:click={saveZaiToken}
+                >保存</button>
+            </div>
+        {/if}
+
+        {#if zaiQuota}
+            {@const zaiPercent = Math.min(100, zaiQuota.percentage)}
+            {@const zaiOffset = circumference - (zaiPercent / 100) * circumference}
+            <div class="flex items-center gap-6">
+                <div class="relative w-24 h-24 flex items-center justify-center shrink-0">
+                    <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                        <circle class="stroke-gray-100" stroke-width="8" fill="transparent" r={radius} cx="50" cy="50" />
+                        <circle
+                            class="transition-all duration-700 ease-out
+                                {zaiPercent >= 90 ? 'stroke-red-500' : zaiPercent >= 80 ? 'stroke-orange-500' : 'stroke-green-500'}"
+                            stroke-width="8" stroke-linecap="round" fill="transparent"
+                            r={radius} cx="50" cy="50"
+                            stroke-dasharray={circumference} stroke-dashoffset={zaiOffset}
+                        />
+                    </svg>
+                    <div class="absolute flex flex-col items-center">
+                        <span class="text-xl font-bold text-gray-800 tabular-nums tracking-tighter">
+                            {zaiPercent}<span class="text-xs align-top text-gray-400 font-medium ml-0.5">%</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="text-gray-800 space-y-1 font-sans">
+                    <div class="text-base">reset in <span class="font-semibold">{formatResetIn(zaiQuota.resetInMinutes)}</span></div>
+                    <div class="text-sm text-gray-400">{zaiQuota.resetAt ?? 'N/A'}</div>
+                </div>
+            </div>
+        {:else if zaiError}
+            <div class="text-sm text-red-500 font-mono">{zaiError}</div>
+        {:else if !zaiToken}
+            <div class="text-sm text-gray-400">点击 ⚙️ 配置 Bearer Token</div>
+        {:else}
+            <div class="animate-pulse h-6 bg-gray-200 rounded w-1/3"></div>
         {/if}
     </div>
 </div>
