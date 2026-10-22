@@ -4,11 +4,10 @@
     import ProductPrice from "./ProductPrice.svelte";
     import ImageUpload from "./ImageUpload.svelte";
     import GitManager from "./GitManager.svelte";
-    import XiaomiSpeaker from "./XiaomiSpeaker.svelte";
     import { listen } from "@tauri-apps/api/event";
     import { onMount } from "svelte";
 
-    type Tab = "system" | "ipinfo" | "upload" | "git" | "xiaomi";
+    type Tab = "system" | "ipinfo" | "upload" | "git";
 
     let activeTab: Tab = "system";
     let isDark = false;
@@ -18,7 +17,6 @@
         { id: "ipinfo", label: "IP Info", icon: "🌐", activeClass: "bg-cyan-100 text-cyan-600" },
         { id: "upload", label: "Upload", icon: "📤", activeClass: "bg-purple-100 text-purple-600" },
         { id: "git", label: "Claude Models", icon: "🤖", activeClass: "bg-red-100 text-red-600" },
-        { id: "xiaomi", label: "Speaker", icon: "🔊", activeClass: "bg-orange-100 text-orange-600" },
     ];
 
     function toggleTheme() {
@@ -81,9 +79,6 @@
         </div>
         <div class:hidden={activeTab !== "git"}>
             <GitManager />
-        </div>
-        <div class:hidden={activeTab !== "xiaomi"}>
-            <XiaomiSpeaker />
         </div>
     </main>
 </div>
