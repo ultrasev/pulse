@@ -37,7 +37,7 @@
 </script>
 
 <div class="h-full flex">
-    <aside class="w-52 shrink-0 flex flex-col p-4 gap-4 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+    <aside class="w-52 shrink-0 flex flex-col p-4 gap-4 bg-gray-100 border-r border-gray-200">
         <h1 class="text-2xl font-bold px-2">Pulse</h1>
 
         <nav class="flex flex-col gap-1">
@@ -47,7 +47,7 @@
                     class="flex items-center gap-3 py-2 px-3 rounded-md font-medium text-left transition-colors
                         {activeTab === tab.id
                         ? tab.activeClass
-                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800'}"
+                        : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'}"
                 >
                     <span>{tab.icon}</span>
                     <span>{tab.label}</span>

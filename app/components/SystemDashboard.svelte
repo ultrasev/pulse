@@ -49,7 +49,7 @@
 
     onMount(() => {
         fetchStats();
-        intervalId = setInterval(fetchStats, 1000);
+        intervalId = setInterval(fetchStats, 5000);
     });
 
     onDestroy(() => {
